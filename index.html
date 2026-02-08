@@ -1,0 +1,185 @@
+﻿<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Todo App</title>
+		<link rel="stylesheet" href="index.css" />
+	</head>
+	<body>
+		<div id="root"></div>
+
+		<script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+		<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+		<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+		<script type="text/babel">
+			const { useMemo, useState } = React;
+
+			const FILTERS = {
+				all: "All",
+				active: "Active",
+				completed: "Completed",
+			};
+
+			function App() {
+				const [todos, setTodos] = useState([
+					{ id: 1, title: "Learn JavaScript", completed: true },
+					{ id: 2, title: "Learn React", completed: false },
+					{ id: 3, title: "Have a life!", completed: false },
+				]);
+				const [filter, setFilter] = useState("all");
+
+				const remainingCount = useMemo(
+					() => todos.filter((todo) => !todo.completed).length,
+					[todos]
+				);
+
+				const filteredTodos = useMemo(() => {
+					switch (filter) {
+						case "active":
+							return todos.filter((todo) => !todo.completed);
+						case "completed":
+							return todos.filter((todo) => todo.completed);
+						default:
+							return todos;
+					}
+				}, [filter, todos]);
+
+				const allCompleted = todos.length > 0 && remainingCount === 0;
+
+				function addTodo(event) {
+					event.preventDefault();
+					const form = event.currentTarget;
+					const input = form.elements.title;
+					const title = input.value.trim();
+					if (!title) return;
+
+					setTodos((prev) => [
+						...prev,
+						{ id: Date.now(), title, completed: false },
+					]);
+					input.value = "";
+				}
+
+				function toggleTodo(id) {
+					setTodos((prev) =>
+						prev.map((todo) =>
+							todo.id === id
+								? { ...todo, completed: !todo.completed }
+								: todo
+						)
+					);
+				}
+
+				function removeTodo(id) {
+					setTodos((prev) => prev.filter((todo) => todo.id !== id));
+				}
+
+				function clearCompleted() {
+					setTodos((prev) => prev.filter((todo) => !todo.completed));
+				}
+
+				function toggleAll(event) {
+					const nextCompleted = event.target.checked;
+					setTodos((prev) =>
+						prev.map((todo) => ({ ...todo, completed: nextCompleted }))
+					);
+				}
+
+				return (
+					<React.Fragment>
+						<section className="todoapp">
+							<header className="header">
+								<h1>todos</h1>
+								<form onSubmit={addTodo}>
+									<input
+										className="new-todo"
+										name="title"
+										placeholder="What needs to be done?"
+										autoFocus
+									/>
+								</form>
+							</header>
+
+							<section className="main">
+								<input
+									className="toggle-all"
+									id="toggle-all"
+									type="checkbox"
+									checked={allCompleted}
+									onChange={toggleAll}
+								/>
+								<label htmlFor="toggle-all">Mark all as complete</label>
+
+								<ul className="todo-list">
+									{filteredTodos.map((todo) => (
+										<li
+											key={todo.id}
+											className={todo.completed ? "completed" : ""}
+										>
+											<div className="view">
+												<input
+													className="toggle"
+													type="checkbox"
+													checked={todo.completed}
+													onChange={() => toggleTodo(todo.id)}
+												/>
+												<label>{todo.title}</label>
+												<button
+													className="destroy"
+													onClick={() => removeTodo(todo.id)}
+												></button>
+											</div>
+										</li>
+									))}
+								</ul>
+							</section>
+
+							<footer className="footer">
+								<span className="todo-count">
+									<strong>{remainingCount}</strong>
+									{remainingCount === 1 ? " item" : " items"} left
+								</span>
+
+								<ul className="filters">
+									{Object.entries(FILTERS).map(([key, label]) => (
+										<li key={key}>
+											<a
+												href="#/"
+												className={filter === key ? "selected" : ""}
+												onClick={(event) => {
+													event.preventDefault();
+													setFilter(key);
+												}}
+											>
+												{label}
+											</a>
+										</li>
+									))}
+								</ul>
+
+								<button className="clear-completed" onClick={clearCompleted}>
+									Clear completed
+								</button>
+							</footer>
+						</section>
+
+						<footer className="info">
+							<p>Click to edit a todo</p>
+							<p>
+								Created by <a href="https://d12n.me/">Dmitry Sharabin</a>
+							</p>
+							<p>
+								Part of <a href="http://todomvc.com">TodoMVC</a>
+							</p>
+						</footer>
+					</React.Fragment>
+				);
+			}
+
+			const root = ReactDOM.createRoot(document.getElementById("root"));
+			root.render(<App />);
+		</script>
+	</body>
+</html>
